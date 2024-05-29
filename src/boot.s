@@ -77,6 +77,13 @@ _start:
 	*/
 
 	/*
+	Push the EBX register to the top of the stack cause it contains the 
+	multiboot information data structure
+	*/
+	push %ebx
+	push %eax
+
+	/*
 	Enter the high-level kernel. The ABI requires the stack is 16-byte
 	aligned at the time of the call instruction (which afterwards pushes
 	the return pointer of size 4 bytes). The stack was originally 16-byte
