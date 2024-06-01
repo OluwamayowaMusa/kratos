@@ -99,21 +99,21 @@ pub unsafe extern "C" fn memset(ptr: *mut u8, character: u8, size: usize) {
 #[no_mangle]
 pub unsafe extern "C" fn kernel_main(_magic: u32, info: *const MultibootInfo) -> ! {
     let mut terminal = Terminal::new();
+    let number_of_blocks = (*info).mmap_length as usize / core::mem::size_of::<MultibootMmapEntry>();
+    let mmap_entry = (*info).mmap_addr as *const MultibootMmapEntry;
 
-    for index in 0..(*info).mmap_length {
-        let mmap_entry = ((*info).mmap_addr
-            + core::mem::size_of::<MultibootMmapEntry>() as u32 * index)
-            as *const MultibootMmapEntry;
+    for offset in 0..number_of_blocks {
+        let memory = mmap_entry.add(offset);
 
-        terminal.write_text(b"size: ");
-        terminal.write_numbers((*mmap_entry).size as usize);
+        terminal.write_text(b"Size: ");
+        terminal.write_numbers((*memory).size as usize);
         terminal.write_text(b" len: ");
-        terminal.write_numbers((*mmap_entry).len as usize);
+        terminal.write_numbers((*memory).len as usize);
         terminal.write_text(b" addr: ");
-        terminal.write_numbers((*mmap_entry).addr as usize);
+        terminal.write_numbers((*memory).addr as usize);
         terminal.write_text(b" type: ");
-        terminal.write_numbers((*mmap_entry).type_ as usize);
-        terminal.write_text(b"\n");
+        terminal.write_numbers((*memory).type_ as usize);
+        terminal.write_text(b"\n")
     }
 
     loop {}
