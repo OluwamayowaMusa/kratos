@@ -33,8 +33,9 @@ undefined behavior.
 .section .bss
 .align 16
 stack_bottom:
-.skip 16384 # 16 KiB
+.skip 16380 # 16 KiB - 4 bytes
 stack_top:
+.skip 4 # Allocated 4 bytes of space to prevent stack_top being the last element
 
 /*
 The linker script specifies _start as the entry point to the kernel and the
@@ -108,6 +109,14 @@ _start:
 	cli
 1:	hlt
 	jmp 1b
+
+/* Get the Stack Pointer */
+.global get_esp
+.type get_esp, @function
+get_esp:
+	mov %esp, %eax
+	ret
+
 
 /*
 Set the size of the _start symbol to the current location '.' minus its start.

@@ -18,7 +18,10 @@ SECTIONS
 	   work around this issue. This does not use that feature, so 2M was
 	   chosen as a safer option than the traditional 1M. */
 	. = 2M;
- 
+
+	/* Annotate the start of the kernel */
+	KERNEL_START = .;
+
 	/* First put the multiboot header, as it is required to be put very early
 	   in the image or the bootloader won't recognize the file format.
 	   Next we'll put the .text section. */
@@ -39,14 +42,20 @@ SECTIONS
 	{
 		*(.data)
 	}
- 
+
 	/* Read-write data (uninitialized) and stack */
 	.bss BLOCK(4K) : ALIGN(4K)
 	{
 		*(COMMON)
 		*(.bss)
 	}
+
+	/* Without this kernel end is not incremented to avoid coilliding with bss */
+	.phony : {
+	}
  
+	/*Annotate end of kernel*/
+	KERNEL_END = .;
 	/* The compiler may produce other sections, by default it will put them in
 	   a segment with the same name. Simply add stuff here as needed. */
 }

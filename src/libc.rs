@@ -1,3 +1,9 @@
+extern "C" {
+    pub static KERNEL_START: u32;
+    pub static mut KERNEL_END: u32; // Mutable due to the initialization of the the free segement
+    pub fn get_esp() -> u32;
+}
+
 #[allow(clippy::missing_safety_doc)]
 #[no_mangle]
 pub unsafe extern "C" fn memset(ptr: *mut u8, character: u8, size: usize) {

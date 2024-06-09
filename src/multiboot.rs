@@ -1,4 +1,4 @@
-use crate::vga::Terminal;
+use crate::println;
 use core::fmt::Write;
 
 // Multiboot information
@@ -39,43 +39,51 @@ pub struct MultibootInfo {
     boot_loader_name: *const u8,
 }
 
+impl MultibootInfo {
+
+    #[allow(clippy::missing_safety_doc)]
+    pub unsafe fn get_memory_map(&self) -> &[MultibootMmapEntry] {
+        let number_of_memory_segments =
+            self.mmap_length as usize / core::mem::size_of::<MultibootMmapEntry>();
+        core::slice::from_raw_parts(
+            self.mmap_addr as *const MultibootMmapEntry,
+            number_of_memory_segments,
+        )
+    }
+}
+
 // Low field contains important data
 #[repr(C, packed)]
-struct MultibootMmapEntry {
-    size: u32,
-    addr_low: u32,
-    addr_high: u32,
-    len_low: u32,
-    len_high: u32,
-    type_: u32,
+#[derive(Debug)]
+pub struct MultibootMmapEntry {
+    pub size: u32,
+    pub addr: u64,
+    pub len: u64,
+    pub type_: u32,
 }
 
 #[allow(clippy::missing_safety_doc)]
-pub unsafe fn print_mmap_sections(terminal: &mut Terminal, info: *const MultibootInfo) {
-    let boot_loader_name = (*info).boot_loader_name;
-    let name_slice = core::str::from_raw_parts(boot_loader_name, 5);
-    writeln!(terminal, "Boot Loader name: {}", name_slice).expect("Not Written");
+pub unsafe fn print_mmap_sections(info: *const MultibootInfo) {
+    let boot_loader_name = core::str::from_raw_parts((*info).boot_loader_name, 5);
+    println!("Boot Loader name: {}", boot_loader_name);
 
-    let mmap_length = (*info).mmap_length as usize;
-    let base_addr = (*info).mmap_addr as *const MultibootMmapEntry;
-    writeln!(terminal, "Available memory segments").expect("Not Written");
-    writeln!(terminal, "mmap_length: {}", mmap_length).expect("Not Written");
+    let mut total_memmory = 0;
+    println!("Available memory segments");
+    let mmap_length = (*info).mmap_length;
+    println!("mmap_length: {}", mmap_length);
 
-    for index in 0..mmap_length {
-        let memory = base_addr.add(index);
-        let size = (*memory).size;
-        let len = (*memory).len_low;
-        let addr = (*memory).addr_low;
-        let type_ = (*memory).type_;
+    for memory in (*info).get_memory_map() {
+        let size = memory.size;
+        let len = memory.len;
+        let addr = memory.addr;
+        let type_ = memory.type_;
+        total_memmory += len;
 
-        if size == 0 {
-            writeln!(terminal, "End of memory segments").expect("Not Written");
-            break;
-        }
-        writeln!(
-            terminal,
-            "Size: {size}, len: {len}, addr: {addr}, type : {type_}"
-        )
-        .expect("Not Written");
+        println!("Size: {size}, len: {len}, addr: {addr:#0X}, type : {type_}");
     }
+    println!(
+        "Total Memory: {}MB",
+        (total_memmory as f32) / 1024.0 / 1024.0
+    );
+    println!("End of memory segments.");
 }

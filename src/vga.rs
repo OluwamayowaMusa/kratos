@@ -4,6 +4,27 @@ use core::fmt::Write; // Write Formatted arguments
 const VGA_WIDTH: usize = 80;
 const VGA_HEIGHT: usize = 25;
 
+pub static mut TERMINAL: Terminal = Terminal::new(VgaColor::LightGrey, VgaColor::Black);
+
+#[macro_export]
+macro_rules! print {
+    ( $ ( $arg:tt )* ) => {
+        #[allow(clippy::macro_metavars_in_unsafe)]
+        unsafe {
+            let terminal = core::ptr::addr_of_mut!($crate::vga::TERMINAL);
+            write!(&mut *terminal, $($arg)*).expect("Not Written");
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! println {
+    ( $ ( $arg:tt )* ) => {
+        $crate::print!($($arg)*);
+        $crate::print!("\n");
+    };
+}
+
 #[allow(dead_code)]
 pub enum VgaColor {
     Black,
@@ -31,6 +52,8 @@ pub struct Terminal {
     terminal_buffer: *mut u16,
 }
 
+unsafe impl Sync for Terminal {}
+
 impl Write for Terminal {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
         self.write_text(s.as_bytes());
@@ -40,7 +63,7 @@ impl Write for Terminal {
 }
 
 impl Terminal {
-    pub fn new(fore_ground_color: VgaColor, back_ground_color: VgaColor) -> Terminal {
+    pub const fn new(fore_ground_color: VgaColor, back_ground_color: VgaColor) -> Terminal {
         let terminal_row = 0;
         let terminal_column = 0;
         let terminal_color = Terminal::set_color(fore_ground_color, back_ground_color);
@@ -93,7 +116,7 @@ impl Terminal {
         self.set_cursor()
     }
 
-    fn set_color(fore_ground_color: VgaColor, back_ground_color: VgaColor) -> u8 {
+    const fn set_color(fore_ground_color: VgaColor, back_ground_color: VgaColor) -> u8 {
         fore_ground_color as u8 | (back_ground_color as u8) << 4
     }
 
