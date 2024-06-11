@@ -9,7 +9,6 @@
 #![reexport_test_harness_main = "test_main"]
 #![test_runner(test_runner)]
 
-
 extern crate alloc;
 use alloc::vec;
 use core::arch::global_asm;
@@ -21,6 +20,10 @@ use kratos::allocator::Allocator;
 use kratos::libc::{get_esp, KERNEL_END, KERNEL_START};
 use kratos::multiboot::{print_mmap_sections, MultibootInfo};
 use kratos::println;
+
+// Contains Test
+#[cfg(test)]
+mod test;
 
 // Static Variables
 use kratos::io::vga::TERMINAL;
@@ -34,6 +37,11 @@ static ALLOC: Allocator = Allocator::new();
 global_asm!(include_str!("boot.s"), options(att_syntax));
 
 fn test_runner(tests: &[&dyn Fn()]) {
+    println!("Running {} tests", tests.len());
+
+    for test in tests {
+        test();
+    }
 }
 
 // Defines the behavior of panic
@@ -60,7 +68,6 @@ pub unsafe extern "C" fn kernel_main(_magic: u32, info: *const MultibootInfo) ->
 
     SERIAL.init().expect("Serial not initialized");
     
-    assert_eq!(1, 0);
     #[cfg(test)]    
     {
         test_main();

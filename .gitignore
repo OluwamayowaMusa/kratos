@@ -3,5 +3,4 @@
 *.bin
 *.iso
 /isodir
-test*
 target/
