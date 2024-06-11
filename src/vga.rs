@@ -11,6 +11,7 @@ macro_rules! print {
     ( $ ( $arg:tt )* ) => {
         #[allow(clippy::macro_metavars_in_unsafe)]
         unsafe {
+            use core::fmt::Write;
             let terminal = core::ptr::addr_of_mut!($crate::vga::TERMINAL);
             write!(&mut *terminal, $($arg)*).expect("Not Written");
         }

@@ -6,7 +6,6 @@
 extern crate alloc;
 use alloc::vec;
 use core::arch::global_asm;
-use core::fmt::Write;
 use core::panic::PanicInfo;
 use core::ptr::addr_of;
 
@@ -16,6 +15,7 @@ use kratos::libc::{get_esp, KERNEL_END, KERNEL_START};
 use kratos::multiboot::{print_mmap_sections, MultibootInfo};
 use kratos::println;
 use kratos::vga::TERMINAL;
+use kratos::io::init_serial;
 
 #[global_allocator]
 static ALLOC: Allocator = Allocator::new();
@@ -41,6 +41,8 @@ pub unsafe extern "C" fn kernel_main(_magic: u32, info: *const MultibootInfo) ->
     TERMINAL.init().expect("Terminal not initialized");
 
     ALLOC.init(&*info);
+
+    assert_eq!(0, init_serial());
 
     println!("Stack Pointer: {:#x}", get_esp());
     println!(

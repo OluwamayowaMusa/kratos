@@ -1,5 +1,4 @@
 use crate::println;
-use core::fmt::Write;
 
 // Multiboot information
 #[repr(C, packed)]

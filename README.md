@@ -12,3 +12,5 @@
 9) https://csilinux.com/demystifying-objdump/
 10) https://lldb.llvm.org/use/tutorial.html
 11) https://wiki.osdev.org/Kernel_Debugging
+* **IO**
+12) https://wiki.osdev.org/Serial_Ports
