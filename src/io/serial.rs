@@ -33,7 +33,7 @@ impl Serial {
         // (not-loopback with IRQs enabled and OUT#1 and OUT#2 bits enabled)
         outb(PORT + 4, 0x0F);
     
-        println!("IO driver initialized");
+        println!("Serial driver initialized");
         
         Ok(())
     }
@@ -98,4 +98,9 @@ unsafe fn inb(addr: u16) -> u8 {
         );
 
     ret
+}
+
+pub unsafe fn exit(code: u8) {
+    const SHUTDOWN_PORT: u16 = 0xf4;
+    outb(SHUTDOWN_PORT, code);
 }
