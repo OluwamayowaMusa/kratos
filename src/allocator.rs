@@ -5,7 +5,6 @@ use core::{
 };
 
 use crate::{multiboot::MultibootInfo, println};
-use core::fmt::Write;
 
 #[repr(C, packed)]
 #[derive(Debug, PartialEq, Clone, Copy)]
