@@ -6,25 +6,7 @@ const VGA_HEIGHT: usize = 25;
 
 pub static mut TERMINAL: Terminal = Terminal::new(VgaColor::LightGrey, VgaColor::Black);
 
-#[macro_export]
-macro_rules! print {
-    ( $ ( $arg:tt )* ) => {
-        #[allow(clippy::macro_metavars_in_unsafe)]
-        unsafe {
-            use core::fmt::Write;
-            let terminal = core::ptr::addr_of_mut!($crate::vga::TERMINAL);
-            write!(&mut *terminal, $($arg)*).expect("Not Written");
-        }
-    };
-}
 
-#[macro_export]
-macro_rules! println {
-    ( $ ( $arg:tt )* ) => {
-        $crate::print!($($arg)*);
-        $crate::print!("\n");
-    };
-}
 
 #[allow(dead_code)]
 pub enum VgaColor {

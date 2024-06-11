@@ -14,8 +14,10 @@ use kratos::allocator::Allocator;
 use kratos::libc::{get_esp, KERNEL_END, KERNEL_START};
 use kratos::multiboot::{print_mmap_sections, MultibootInfo};
 use kratos::println;
-use kratos::vga::TERMINAL;
-use kratos::io::init_serial;
+
+// Static Variables
+use kratos::io::vga::TERMINAL;
+use kratos::io::serial::SERIAL;
 
 #[global_allocator]
 static ALLOC: Allocator = Allocator::new();
@@ -42,7 +44,7 @@ pub unsafe extern "C" fn kernel_main(_magic: u32, info: *const MultibootInfo) ->
 
     ALLOC.init(&*info);
 
-    assert_eq!(0, init_serial());
+    SERIAL.init().expect("Serial not initialized");
 
     println!("Stack Pointer: {:#x}", get_esp());
     println!(
