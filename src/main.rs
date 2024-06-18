@@ -7,7 +7,7 @@
 // Test
 #![feature(custom_test_frameworks)]
 #![reexport_test_harness_main = "test_main"]
-#![test_runner(test_runner)]
+#![test_runner(test::test_runner)]
 
 extern crate alloc;
 use alloc::vec;
@@ -36,13 +36,7 @@ static ALLOC: Allocator = Allocator::new();
 // Rust's ASM block does not seem to default to at&t syntax. Use `options(att_syntax)`
 global_asm!(include_str!("boot.s"), options(att_syntax));
 
-fn test_runner(tests: &[&dyn Fn()]) {
-    println!("Running {} tests", tests.len());
 
-    for test in tests {
-        test();
-    }
-}
 
 // Defines the behavior of panic
 #[panic_handler]
