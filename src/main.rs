@@ -27,10 +27,9 @@ mod test;
 
 // Static Variables
 use kratos::io::vga::TERMINAL;
+use kratos::allocator::ALLOC;
 use kratos::io::serial::{exit, SERIAL};
 
-#[global_allocator]
-static ALLOC: Allocator = Allocator::new();
 
 // Include the boot.s which includes the _start function which is the entry point of the program
 // Rust's ASM block does not seem to default to at&t syntax. Use `options(att_syntax)`

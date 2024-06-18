@@ -6,6 +6,9 @@ use core::{
 
 use crate::{multiboot::MultibootInfo, println};
 
+#[global_allocator]
+pub static ALLOC: Allocator = Allocator::new();
+
 #[repr(C, packed)]
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct FreeSegment {
