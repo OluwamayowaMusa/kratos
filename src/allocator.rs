@@ -12,8 +12,8 @@ pub static ALLOC: Allocator = Allocator::new();
 #[repr(C, packed)]
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct FreeSegment {
-    size: usize,
-    next_segment: *mut FreeSegment,
+    pub size: usize,
+    pub next_segment: *mut FreeSegment,
 }
 
 impl FreeSegment {
@@ -96,7 +96,7 @@ impl Allocator {
             next_segment: core::ptr::null_mut(),
         };
         self.first_free.store(segment, Ordering::Relaxed);
-        println!("Allocator Initialized");
+        println!("Allocator Initialized, {:?}", segment);
     }
 }
 

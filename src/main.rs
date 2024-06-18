@@ -7,7 +7,7 @@
 // Test
 #![feature(custom_test_frameworks)]
 #![reexport_test_harness_main = "test_main"]
-#![test_runner(test::test_runner)]
+#![test_runner(tests::test_runner)]
 
 extern crate alloc;
 use alloc::vec;
@@ -22,19 +22,16 @@ use kratos::println;
 
 // Contains Test
 #[cfg(test)]
-mod test;
+mod tests;
 
 // Static Variables
 use kratos::io::vga::TERMINAL;
 use kratos::allocator::ALLOC;
 use kratos::io::serial::{exit, SERIAL};
 
-
 // Include the boot.s which includes the _start function which is the entry point of the program
 // Rust's ASM block does not seem to default to at&t syntax. Use `options(att_syntax)`
 global_asm!(include_str!("boot.s"), options(att_syntax));
-
-
 
 // Defines the behavior of panic
 #[panic_handler]
