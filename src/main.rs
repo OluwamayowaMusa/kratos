@@ -52,7 +52,7 @@ fn panic(panic_info: &PanicInfo) -> ! {
 #[allow(clippy::empty_loop, clippy::missing_safety_doc)]
 #[no_mangle]
 pub unsafe extern "C" fn kernel_main(_magic: u32, info: *const MultibootInfo) -> ! {
-    TERMINAL.init().expect("Terminal not initialized");
+    TERMINAL.borrow_mut().init().expect("Terminal not initialized");
 
     ALLOC.init(&*info);
 

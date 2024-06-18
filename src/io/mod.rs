@@ -1,5 +1,5 @@
 pub mod serial; // Contains Serial related functions
-pub mod vga; // Contains VGA related functions 
+pub mod vga; // Contains VGA related functions
 
 #[macro_export]
 macro_rules! print {
@@ -7,8 +7,7 @@ macro_rules! print {
         #[allow(clippy::macro_metavars_in_unsafe)]
         unsafe {
             use core::fmt::Write;
-            let vga_writer = core::ptr::addr_of_mut!($crate::io::vga::TERMINAL);
-            write!(&mut *vga_writer, $($arg)*).expect("Not Written to VGA");
+            write!($crate::io::vga::TERMINAL.borrow_mut(), $($arg)*).expect("Not Written to VGA");
 
             let serial_writer = core::ptr::addr_of_mut!($crate::io::serial::SERIAL);
             write!(&mut *serial_writer, $($arg)*).expect("Not Written to Serial")

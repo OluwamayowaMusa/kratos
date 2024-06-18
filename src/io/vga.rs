@@ -1,10 +1,10 @@
-use core::fmt::Write; // Write Formatted arguments
+use core::{cell::RefCell, fmt::Write}; // Write Formatted arguments
 
 // VGA text mode color constants
 const VGA_WIDTH: usize = 80;
 const VGA_HEIGHT: usize = 25;
 
-pub static mut TERMINAL: Terminal = Terminal::new(VgaColor::LightGrey, VgaColor::Black);
+pub static TERMINAL: StaticTerminal = StaticTerminal::new(VgaColor::LightGrey, VgaColor::Black);
 
 #[allow(dead_code)]
 pub enum VgaColor {
@@ -33,7 +33,27 @@ pub struct Terminal {
     terminal_buffer: *mut u16,
 }
 
-unsafe impl Sync for Terminal {}
+pub struct StaticTerminal {
+    inner: RefCell<Terminal>,
+}
+
+impl StaticTerminal {
+    const fn new(fore_ground_color: VgaColor, back_ground_color: VgaColor) -> StaticTerminal {
+        StaticTerminal {
+            inner: RefCell::new(Terminal::new(fore_ground_color, back_ground_color)),
+        }
+    }
+}
+
+impl core::ops::Deref for StaticTerminal {
+    type Target = RefCell<Terminal>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+unsafe impl Sync for StaticTerminal {}
 
 impl Write for Terminal {
     fn write_str(&mut self, s: &str) -> core::fmt::Result {
