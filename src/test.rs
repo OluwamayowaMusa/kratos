@@ -1,17 +1,22 @@
+use alloc::string::String;
+
 use kratos::{print, println};
 
-pub fn test_runner(tests: &[&dyn Fn()]) {
-    println!("Running {} tests", tests.len());
-
-    for test in tests {
-        test();
-    }
+pub struct TestCase {
+    pub name: &'static str,
+    pub test: &'static (dyn Fn() -> Result<(), String>)
 }
 
 
-#[test_case]
-fn test() {
-    print!("Test 1...");
-    assert!(true);
-    println!("[Ok]");
+pub fn test_runner(tests: &[&TestCase]) {
+    println!("Running {} tests", tests.len());
+
+    for test_case in tests {
+        println!("{}.. .", test_case.name);
+        if let Err(e) = (test_case.test)() {
+            println!("{}", e);
+        } else {
+            println!("[Ok]");
+        }
+    }
 }
