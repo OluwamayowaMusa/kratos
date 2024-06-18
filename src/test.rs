@@ -20,3 +20,18 @@ pub fn test_runner(tests: &[&TestCase]) {
         }
     }
 }
+
+macro_rules! create_test {
+    ($name:ident, $content:block) => {
+        paste::paste! {
+            #[test_case]
+            static $name: TestCase = Testcase {
+                name: stringify!($name),
+                test: &[<$name _test>],
+            };
+            fn [<$name _test>]() -> Result<(), alloc::string::String> {
+                $content
+            }
+        }
+    };
+}

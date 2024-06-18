@@ -16,7 +16,6 @@ use core::ptr::addr_of;
 use core::panic::PanicInfo;
 
 // Libray
-use kratos::allocator::Allocator;
 use kratos::libc::{get_esp, KERNEL_END, KERNEL_START};
 use kratos::multiboot::{print_mmap_sections, MultibootInfo};
 use kratos::println;
