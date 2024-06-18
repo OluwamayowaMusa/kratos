@@ -6,8 +6,6 @@ const VGA_HEIGHT: usize = 25;
 
 pub static mut TERMINAL: Terminal = Terminal::new(VgaColor::LightGrey, VgaColor::Black);
 
-
-
 #[allow(dead_code)]
 pub enum VgaColor {
     Black,

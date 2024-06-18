@@ -61,7 +61,6 @@ pub struct Allocator {
 }
 
 impl Allocator {
-
     #[allow(clippy::new_without_default)]
     pub const fn new() -> Allocator {
         Allocator {
@@ -96,7 +95,7 @@ impl Allocator {
             next_segment: core::ptr::null_mut(),
         };
         self.first_free.store(segment, Ordering::Relaxed);
-        println!("Allocator Initialized, {:?}", segment);
+        println!("Allocator Initialized");
     }
 }
 
@@ -158,8 +157,9 @@ unsafe fn insert_segment_into_list(list_head: *mut FreeSegment, new_segment: *mu
     while !iterator.is_null() {
         assert!(iterator < new_segment);
 
-        let should_insert = (*iterator).next_segment.is_null() || (*iterator).next_segment > new_segment;
-        if should_insert { 
+        let should_insert =
+            (*iterator).next_segment.is_null() || (*iterator).next_segment > new_segment;
+        if should_insert {
             let next = (*iterator).next_segment;
             (*iterator).next_segment = new_segment;
             (*new_segment).next_segment = next;

@@ -6,7 +6,7 @@ mod test_allocator;
 
 pub struct TestCase {
     pub name: &'static str,
-    pub test: &'static (dyn Fn() -> Result<(), String> + Send + Sync)
+    pub test: &'static (dyn Fn() -> Result<(), String> + Send + Sync),
 }
 
 pub fn test_runner(tests: &[&TestCase]) {
@@ -43,7 +43,13 @@ macro_rules! create_test {
 macro_rules! test_eq {
     ($a:expr, $b:expr) => {
         if $a != $b {
-            return Err(alloc::format!("{}:{} {:?} != {:?}", file!(), line!(), $a, $b));
+            return Err(alloc::format!(
+                "{}:{} {:?} != {:?}",
+                file!(),
+                line!(),
+                $a,
+                $b
+            ));
         }
     };
 }
@@ -52,7 +58,13 @@ macro_rules! test_eq {
 macro_rules! test_ne {
     ($a:expr, $b:expr) => {
         if $a == $b {
-            return Err(alloc::format!("{}:{} {:?} != {:?}", file!(), line!(), $a, $b));
+            return Err(alloc::format!(
+                "{}:{} {:?} != {:?}",
+                file!(),
+                line!(),
+                $a,
+                $b
+            ));
         }
     };
 }
@@ -61,7 +73,13 @@ macro_rules! test_ne {
 macro_rules! test_ge {
     ($a:expr, $b:expr) => {
         if $a < $b {
-            return Err(alloc::format!("{}:{} {:?} != {:?}", file!(), line!(), $a, $b));
+            return Err(alloc::format!(
+                "{}:{} {:?} != {:?}",
+                file!(),
+                line!(),
+                $a,
+                $b
+            ));
         }
     };
 }

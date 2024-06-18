@@ -1,5 +1,5 @@
-pub mod vga; // Contains VGA related functions 
 pub mod serial; // Contains Serial related functions
+pub mod vga; // Contains VGA related functions 
 
 #[macro_export]
 macro_rules! print {
