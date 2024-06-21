@@ -15,6 +15,9 @@ use core::arch::global_asm;
 use core::panic::PanicInfo;
 use core::ptr::addr_of;
 
+// External Crate
+use hashbrown::HashMap;
+
 // Libray
 use kratos::io;
 use kratos::libc::{get_esp, KERNEL_END, KERNEL_START};
@@ -70,12 +73,12 @@ pub unsafe extern "C" fn kernel_main(_magic: u32, info: *const MultibootInfo) ->
 
     print_mmap_sections(info);
 
-    let initial_state = *ALLOC.first_free.load(core::sync::atomic::Ordering::Relaxed);
-    let list = vec![1, 2, 3, 4];
-    println!("List: {:?}", list);
-    drop(list);
-    let after_state = *ALLOC.first_free.load(core::sync::atomic::Ordering::Relaxed);
-    assert_eq!(initial_state, after_state);
+    {
+        println!("A vector: {:?}", vec![1, 2, 3, 4]);
+        let mut a_map = HashMap::new();
+        a_map.insert("age", 4);
+        println!("A map: {:?}", a_map);
+    }
 
     loop {}
 }
