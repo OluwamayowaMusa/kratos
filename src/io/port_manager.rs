@@ -1,8 +1,7 @@
 use core::arch::asm;
 use hashbrown::HashSet;
 
-
-struct PortManager {
+pub struct PortManager {
     allocated_ports: HashSet<u16>,
 }
 
@@ -30,9 +29,7 @@ pub struct Port {
 
 impl Port {
     pub fn new(addr: u16) -> Port {
-        Port {
-            addr
-        }
+        Port { addr }
     }
 
     pub fn get_addr(&self) -> u16 {
@@ -47,14 +44,14 @@ impl Port {
             asm!(r#"
 	        out %al, %dx
 	        "#,
-            in("dx") self.addr,
-            in("al") val,
-            options(att_syntax)
-	    );
+                in("dx") self.addr,
+                in("al") val,
+                options(att_syntax)
+            );
         }
     }
 
-    pub fn readb(&self) -> u8 { 
+    pub fn readb(&self) -> u8 {
         unsafe {
             let mut ret;
             asm!(r#"
@@ -64,11 +61,8 @@ impl Port {
             out("al") ret,
             options(att_syntax)
             );
-        
+
             ret
         }
-
     }
 }
-
-

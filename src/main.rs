@@ -16,6 +16,7 @@ use core::panic::PanicInfo;
 use core::ptr::addr_of;
 
 // Libray
+use kratos::io;
 use kratos::libc::{get_esp, KERNEL_END, KERNEL_START};
 use kratos::multiboot::{print_mmap_sections, MultibootInfo};
 use kratos::println;
@@ -26,8 +27,6 @@ mod tests;
 
 // Static Variables
 use kratos::allocator::ALLOC;
-use kratos::io::serial::{exit, SERIAL};
-use kratos::io::vga::TERMINAL;
 
 // Include the boot.s which includes the _start function which is the entry point of the program
 // Rust's ASM block does not seem to default to at&t syntax. Use `options(att_syntax)`
@@ -42,9 +41,7 @@ fn panic(panic_info: &PanicInfo) -> ! {
         println!("Panicked in else");
     }
 
-    unsafe {
-        exit(1);
-    }
+    io::exit(1);
 
     loop {}
 }
@@ -52,16 +49,16 @@ fn panic(panic_info: &PanicInfo) -> ! {
 #[allow(clippy::empty_loop, clippy::missing_safety_doc)]
 #[no_mangle]
 pub unsafe extern "C" fn kernel_main(_magic: u32, info: *const MultibootInfo) -> ! {
-    TERMINAL.borrow_mut().init().expect("Terminal not initialized");
-
     ALLOC.init(&*info);
 
-    SERIAL.init().expect("Serial not initialized");
+    let mut port_manager = io::port_manager::PortManager::new();
+    io::init_display(&mut port_manager);
+    println!("Display Initialized");
 
     #[cfg(test)]
     {
         test_main();
-        exit(0);
+        io::exit(0);
     }
 
     println!("Stack Pointer: {:#x}", get_esp());
