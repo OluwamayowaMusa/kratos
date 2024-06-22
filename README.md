@@ -1,4 +1,5 @@
 # Useful Resources
+* **Setting Up**
 1) https://wiki.osdev.org/Bare_Bones
 2) https://stackoverflow.com/questions/67902309/how-to-compile-rust-code-to-bare-metal-32-bit-x86-i686-code-what-compile-targ
 3) https://llvm.org/docs/LangRef.html#data-layout
