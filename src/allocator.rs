@@ -6,11 +6,14 @@ use core::{
 
 use crate::{multiboot::MultibootInfo, println};
 
+#[global_allocator]
+pub static ALLOC: Allocator = Allocator::new();
+
 #[repr(C, packed)]
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct FreeSegment {
-    size: usize,
-    next_segment: *mut FreeSegment,
+    pub size: usize,
+    pub next_segment: *mut FreeSegment,
 }
 
 impl FreeSegment {
@@ -58,7 +61,6 @@ pub struct Allocator {
 }
 
 impl Allocator {
-
     #[allow(clippy::new_without_default)]
     pub const fn new() -> Allocator {
         Allocator {
@@ -155,8 +157,9 @@ unsafe fn insert_segment_into_list(list_head: *mut FreeSegment, new_segment: *mu
     while !iterator.is_null() {
         assert!(iterator < new_segment);
 
-        let should_insert = (*iterator).next_segment.is_null() || (*iterator).next_segment > new_segment;
-        if should_insert { 
+        let should_insert =
+            (*iterator).next_segment.is_null() || (*iterator).next_segment > new_segment;
+        if should_insert {
             let next = (*iterator).next_segment;
             (*iterator).next_segment = new_segment;
             (*new_segment).next_segment = next;

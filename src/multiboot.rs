@@ -39,7 +39,6 @@ pub struct MultibootInfo {
 }
 
 impl MultibootInfo {
-
     #[allow(clippy::missing_safety_doc)]
     pub unsafe fn get_memory_map(&self) -> &[MultibootMmapEntry] {
         let number_of_memory_segments =

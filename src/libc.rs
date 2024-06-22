@@ -34,3 +34,11 @@ pub unsafe extern "C" fn memcmp(string1: *const u8, string2: *const u8, size: us
 
     0
 }
+
+#[allow(clippy::missing_safety_doc)]
+#[no_mangle]
+pub unsafe extern "C" fn memmove(dest: *mut u8, src: *const u8, size: usize) {
+    for index in 0..size {
+        *dest.add(index) = *src.add(index);
+    }
+}
