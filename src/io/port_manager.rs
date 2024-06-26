@@ -6,6 +6,7 @@ pub struct PortManager {
 }
 
 impl PortManager {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> PortManager {
         PortManager {
             allocated_ports: HashSet::new(),
