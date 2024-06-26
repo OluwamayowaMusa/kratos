@@ -83,3 +83,18 @@ macro_rules! test_ge {
         }
     };
 }
+
+
+#[macro_export]
+macro_rules! test_true {
+    ($a:expr) => {
+        if !$a {
+            return Err(alloc::format!(
+                "{}:{} {:?} is not true",
+                file!(),
+                line!(),
+                $a,
+            ));
+        }
+    };
+}
