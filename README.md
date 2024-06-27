@@ -1,4 +1,5 @@
 # Useful Resources
+* **Setting Up**
 1) https://wiki.osdev.org/Bare_Bones
 2) https://stackoverflow.com/questions/67902309/how-to-compile-rust-code-to-bare-metal-32-bit-x86-i686-code-what-compile-targ
 3) https://llvm.org/docs/LangRef.html#data-layout
@@ -15,3 +16,10 @@
 * **IO**
 12) https://wiki.osdev.org/Serial_Ports
 13) https://os.phil-opp.com/testing/
+* **RTC**
+14) https://wiki.osdev.org/CMOS#RTC_Update_In_Progress
+15) https://wiki.osdev.org/Timer_Interrupt_Sources
+16) https://wiki.osdev.org/Non_Maskable_Interrupt
+17) https://wiki.osdev.org/Programmable_Interval_Timer
+18) https://wiki.osdev.org/Interrupts
+19) https://wiki.osdev.org/RTC

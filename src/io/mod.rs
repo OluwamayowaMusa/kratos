@@ -1,4 +1,5 @@
 pub mod port_manager; // Contains Port related functions
+pub mod rtc; // Contains RTC related functions
 pub mod serial; // Contains Serial related functions
 pub mod vga; // Contains VGA related functions
 

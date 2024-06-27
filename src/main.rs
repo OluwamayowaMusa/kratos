@@ -80,5 +80,14 @@ pub unsafe extern "C" fn kernel_main(_magic: u32, info: *const MultibootInfo) ->
         println!("A map: {:?}", a_map);
     }
 
+    let rtc = io::rtc::Rtc::new(&mut port_manager).expect("Failed to create RTC");
+    let mut date = rtc.read();
+    println!("Current date: {:?}", date);
+    date.hours -= 1;
+    rtc.write(&date);
+
+    let date = rtc.read();
+    println!("Current date modified: {:?}", date);
+
     loop {}
 }
