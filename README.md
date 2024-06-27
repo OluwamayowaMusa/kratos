@@ -16,3 +16,10 @@
 * **IO**
 12) https://wiki.osdev.org/Serial_Ports
 13) https://os.phil-opp.com/testing/
+* **RTC**
+14) https://wiki.osdev.org/CMOS#RTC_Update_In_Progress
+15) https://wiki.osdev.org/Timer_Interrupt_Sources
+16) https://wiki.osdev.org/Non_Maskable_Interrupt
+17) https://wiki.osdev.org/Programmable_Interval_Timer
+18) https://wiki.osdev.org/Interrupts
+19) https://wiki.osdev.org/RTC
