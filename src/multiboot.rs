@@ -40,7 +40,7 @@ pub struct MultibootInfo {
 
 impl MultibootInfo {
     #[allow(clippy::missing_safety_doc)]
-    pub unsafe fn get_memory_map(&self) -> &[MultibootMmapEntry] {
+    pub unsafe fn get_memmory_map(&self) -> &[MultibootMmapEntry] {
         let number_of_memory_segments =
             self.mmap_length as usize / core::mem::size_of::<MultibootMmapEntry>();
         core::slice::from_raw_parts(
@@ -70,7 +70,7 @@ pub unsafe fn print_mmap_sections(info: *const MultibootInfo) {
     let mmap_length = (*info).mmap_length;
     println!("mmap_length: {}", mmap_length);
 
-    for memory in (*info).get_memory_map() {
+    for memory in (*info).get_memmory_map() {
         let size = memory.size;
         let len = memory.len;
         let addr = memory.addr;
@@ -84,4 +84,46 @@ pub unsafe fn print_mmap_sections(info: *const MultibootInfo) {
         (total_memmory as f32) / 1024.0 / 1024.0
     );
     println!("End of memory segments.");
+}
+
+pub unsafe fn find_rsdp_ptr(info: *const MultibootInfo) -> Option<u64> {
+    let mut memmory_map = (*info).get_memmory_map().iter();
+    let first = memmory_map.next().unwrap();
+    let last = memmory_map.last().unwrap();
+
+    let mut start_addr = first.addr;
+
+    while start_addr < last.addr + last.len {
+        let base_addr = start_addr as *const u8;
+        if core::str::from_raw_parts(base_addr, 8) == "RSD PTR " {
+            println!("Found at address: {:?}", base_addr);
+            return Some(start_addr);
+        }
+        start_addr += 16;
+    }
+    None
+}
+
+
+#[repr(C, packed)]
+pub struct RsdpT {
+    pub signature: [u8; 8],
+    pub checksum: u8,
+    pub oemid: [u8; 6],
+    pub revision: u8,
+    pub rsdt_address: u32
+}
+
+pub fn validate_rsdp(rsdp_ptr: *const RsdpT) {
+    let length = core::mem::size_of::<RsdpT>();
+    let rsdp_ptr = rsdp_ptr as *const u8;
+
+    let mut sum = 0;
+    for i in 0..length {
+        unsafe {
+            sum += (*rsdp_ptr.add(i)) as u64;
+        }
+    }
+
+    println!("{} {}", sum, sum % 256);
 }

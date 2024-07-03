@@ -4,6 +4,7 @@
 #![no_main]
 // Panic
 #![feature(panic_info_message)]
+#![feature(ascii_char)]
 // Test
 #![feature(custom_test_frameworks)]
 #![reexport_test_harness_main = "test_main"]
@@ -80,14 +81,9 @@ pub unsafe extern "C" fn kernel_main(_magic: u32, info: *const MultibootInfo) ->
         println!("A map: {:?}", a_map);
     }
 
-    let rtc = io::rtc::Rtc::new(&mut port_manager).expect("Failed to create RTC");
-    let mut date = rtc.read();
-    println!("Current date: {:?}", date);
-    date.hours -= 1;
-    rtc.write(&date);
+    let rsdp_ptr = kratos::multiboot::find_rsdp_ptr(info).expect("RSDP ptr not found");
+    let rsdpt = (rsdp_ptr as *const u8) as *const kratos::multiboot::RsdpT;
 
-    let date = rtc.read();
-    println!("Current date modified: {:?}", date);
-
+    kratos::multiboot::validate_rsdp(rsdpt);
     loop {}
 }

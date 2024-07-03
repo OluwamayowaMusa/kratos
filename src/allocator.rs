@@ -77,7 +77,7 @@ impl Allocator {
         let kernel_start_addr = addr_of!(crate::libc::KERNEL_START) as u64;
         let kernel_end_addr = addr_of!(crate::libc::KERNEL_END) as u64;
         let big_block = info
-            .get_memory_map()
+            .get_memmory_map()
             .iter()
             .find(
                 |entry| entry.addr == kernel_start_addr - 1024 * 1024, // Kernel start at 2M due to UEFI
