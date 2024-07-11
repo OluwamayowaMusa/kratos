@@ -1,146 +1,189 @@
+use alloc::vec::Vec;
 use core::arch::asm;
+use core::cell::RefCell;
 
+// Library
 use crate::println;
+use crate::util::bit_manipulation::{get_bits, set_bit, set_bits};
 
-static GDT_ENTRIES: [u64; 3] = get_gdt_vals();
+static GDT_ENTRIES: GdtTable = GdtTable::new();
 
-pub fn init() {
-    let limit = core::mem::size_of_val(&GDT_ENTRIES) - 1;
-    let gdt = (&GDT_ENTRIES as *const u64 as u64) << 16 | limit as u64;
-    println!("{:?}", &GDT_ENTRIES as *const u64);
+struct GdtTable {
+    inner: RefCell<Vec<GdtSegemt>>,
+}
+
+impl core::ops::Deref for GdtTable {
+    type Target = RefCell<Vec<GdtSegemt>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+impl GdtTable {
+    const fn new() -> GdtTable {
+        GdtTable {
+            inner: RefCell::new(Vec::new()),
+        }
+    }
+}
+
+unsafe impl Sync for GdtTable {}
+
+#[repr(C, packed)]
+#[derive(Clone)]
+pub struct GdtSegemt(u64);
+
+impl GdtSegemt {
+    pub fn new(base: u32, limit: u32, access_byte: u8, flags: u8) -> GdtSegemt {
+        let mut descriptor = 1u64;
+        set_bits(&mut descriptor, 0, 16, limit as u64);
+        set_bits(&mut descriptor, 48, 4, (limit >> 16) as u64);
+
+        set_bits(&mut descriptor, 16, 24, base as u64);
+        set_bits(&mut descriptor, 56, 8, (base >> 24) as u64);
+
+        set_bits(&mut descriptor, 40, 8, access_byte as u64);
+
+        set_bits(&mut descriptor, 52, 4, flags as u64);
+
+        GdtSegemt(descriptor)
+    }
+
+    pub fn base(&self) -> u32 {
+        let data = self.0;
+        let mut base = get_bits(data, 16, 24);
+        let upper = get_bits(data, 56, 8);
+        base |= upper << 24;
+        base as u32
+    }
+
+    pub fn limit(&self) -> u32 {
+        let data = self.0;
+        let mut limit = get_bits(data, 0, 16);
+        let upper = get_bits(data, 48, 4);
+        limit |= upper << 16;
+        limit as u32
+    }
+
+    pub fn access(&self) -> u8 {
+        let data = self.0;
+        get_bits(data, 40, 8) as u8
+    }
+
+    pub fn flags(&self) -> u8 {
+        let data = self.0;
+        get_bits(data, 52, 4) as u8
+    }
+}
+
+#[repr(C, packed)]
+struct Gdt {
+    limit: u16,
+    base: u32,
+}
+
+fn read_gdtr() -> Gdt {
+    let mut ret = core::mem::MaybeUninit::uninit();
     unsafe {
         asm!(r#"
-            lgdt [{}]
+            sgdt [{ret}]
             "#,
-            in(reg) &gdt
+            ret = in(reg) ret.as_mut_ptr(),
+            options(nostack, preserves_flags),
+        );
+
+        ret.assume_init()
+    }
+}
+
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn print_gdtr() {
+    let gdt = read_gdtr();
+    let liimt = gdt.limit + 1;
+    let base = gdt.base as *const GdtSegemt;
+    println!("Base: {:?}, Limit: {}", base, liimt);
+
+    for index in 0..(liimt / 8) {
+        println!("Segment [{}]", index);
+        let segment = base.add(index.into());
+        let base = (*segment).base();
+        let limit = (*segment).limit();
+        let access = (*segment).access();
+        let flags = (*segment).flags();
+
+        println!(
+            "Base: {:#x}, Limit: {:#x}, Access: {:#x}, Flags: {:#x}",
+            base, limit, access, flags
         );
     }
 }
 
-pub const fn get_gdt_vals() -> [u64; 3] {
-    let access_byte = AccessByteBulider::new()
-        .set_p(true)
-        .set_dpl(0)
-        .set_s(true)
-        .set_e(true)
-        .set_dc(false)
-        .set_rw(false)
-        .set_a(true)
-        .build();
-    let mut flags:u16 = 0b1100 << 12;
-    flags |= access_byte as u16;
-    let code = create_descriptor(0, 0xFFFFF, flags);
+#[allow(clippy::missing_safety_doc)]
+pub unsafe fn init() {
+    let mut entries = GDT_ENTRIES.borrow_mut();
+    *entries = get_gdt_vals().to_vec();
 
-    let access_byte = AccessByteBulider::new()
-        .set_p(true)
-        .set_dpl(0)
-        .set_s(true)
-        .set_e(false)
-        .set_dc(false)
-        .set_rw(true)
-        .set_a(true)
-        .build();
-    let mut flags:u16 = 0b1100 << 12;
-    flags |= access_byte as u16;
-    let data = create_descriptor(0, 0xFFFFF, flags);
+    let entry_addres: *const GdtSegemt = entries.as_ptr();
+    let limit = entries.len() * core::mem::size_of::<GdtSegemt>() - 1;
 
-    [0u64, code, data]
+    let gdt = Gdt {
+        limit: limit as u16,
+        base: entry_addres as u32,
+    };
+
+    asm!(r#"
+        lgdt [{}]
+        "#,
+        in(reg) &gdt
+    );
 }
 
-pub struct AccessByteBulider {
-    access_byte: u8,
+fn get_gdt_vals() -> [GdtSegemt; 3] {
+    let access_byte = generate_access_byte(AccessByteParams {
+        p: true,
+        dpl: 0,
+        s: true,
+        e: true,
+        dc: false,
+        rw: false,
+        a: true,
+    });
+    let code = GdtSegemt::new(0, 0xFFFFF, access_byte, 0b1100);
+
+    let access_byte = generate_access_byte(AccessByteParams {
+        p: true,
+        dpl: 0,
+        s: true,
+        e: false,
+        dc: false,
+        rw: true,
+        a: true,
+    });
+    let data = GdtSegemt::new(0, 0xFFFFF, access_byte, 0b1100);
+
+    [GdtSegemt(0), code, data]
 }
 
-impl AccessByteBulider {
-    pub const fn new() -> Self {
-        AccessByteBulider {
-            access_byte: 0,
-        }
-    }
-
-    pub const fn set_p(mut self, enable: bool) -> Self {
-        self.access_byte = set_bit(self.access_byte, enable, 7);
-        self
-    }
-
-    pub const fn set_dpl(mut self, val: u8) -> Self {
-        self.access_byte = set_bit(self.access_byte, val >> 1 & 0x1 == 1, 6);
-        self.access_byte = set_bit(self.access_byte, val & 0x1 == 1, 5);
-        self
-    }
-
-    pub const fn set_s(mut self, enable: bool) -> Self {
-        self.access_byte = set_bit(self.access_byte, enable, 4);
-        self
-    }
-
-    pub const fn set_e(mut self, enable: bool) -> Self {
-        self.access_byte = set_bit(self.access_byte, enable, 3);
-        self
-    }
-
-    pub const fn set_dc(mut self, enable: bool) -> Self {
-        self.access_byte = set_bit(self.access_byte, enable, 2);
-        self
-    }
-
-    pub const fn set_rw(mut self, enable: bool) -> Self {
-        self.access_byte = set_bit(self.access_byte, enable, 1);
-        self
-    }
-
-    pub const fn set_a(mut self, enable: bool) -> Self {
-        self.access_byte = set_bit(self.access_byte, enable, 0);
-        self
-    }
-
-    pub const fn build(self) -> u8 {
-        self.access_byte
-    }
-
+struct AccessByteParams {
+    p: bool,
+    dpl: u8,
+    s: bool,
+    e: bool,
+    dc: bool,
+    rw: bool,
+    a: bool,
 }
 
-pub const fn set_bit(mut input: u8, enable: bool, bit: u8) -> u8 {
-    if enable {
-        input |= 1 << bit
-    } else {
-        input &= !(1 << bit)
-    }
+fn generate_access_byte(params: AccessByteParams) -> u8 {
+    let mut access_byte = 1u8;
+    set_bit(&mut access_byte, 7, params.p);
+    set_bits(&mut access_byte, 5, 2, params.dpl);
+    set_bit(&mut access_byte, 4, params.s);
+    set_bit(&mut access_byte, 3, params.e);
+    set_bit(&mut access_byte, 2, params.dc);
+    set_bit(&mut access_byte, 1, params.rw);
+    set_bit(&mut access_byte, 0, params.a);
 
-    input
-}
-
-pub const fn create_descriptor(base: u32, limit: u32, flag: u16) -> u64 {
-
-    // Create the high 32 bit segment
-    let mut descriptor: u64  =  (limit & 0x000F0000) as u64; // set limit bits 19:16
-    descriptor |= (flag <<  8) as u64 & 0x00F0FF00; // set type, p, dpl, s, g, d/b, l and avl fields
-    descriptor |= (base >> 16) as u64 & 0x000000FF; // set base bits 23:16
-    descriptor |= (base & 0xFF000000) as u64; // set base bits 31:24
- 
-    // Shift by 32 to allow for low part of segment
-    descriptor <<= 32;
- 
-    // Create the low 32 bit segment
-    descriptor |= (base  << 16) as u64; // set base bits 15:0
-    descriptor |= (limit  & 0x0000FFFF) as u64; // set limit bits 15:0
- 
-    descriptor
-}
-
-pub fn parse_base(segment: u64) -> u64 {
-    let base_mask_lower = 0x0000_00ff_ffff_0000_u64;
-    let base_mask_upper = 0xff00_0000_0000_0000_u64;
-    let mut base = (segment & base_mask_lower) >> 16;
-    base |= (segment & base_mask_upper) >> 32;
-    base
-}
-
-
-pub fn parse_limit(segment: u64) -> u64 {
-    let limit_mask_lower = 0x0000_0000_0000_ffff_u64;
-    let limit_mask_upper = 0x000f_0000_0000_0000_u64;
-    let mut limit = segment & limit_mask_lower;
-    limit |= (segment & limit_mask_upper) >> 32;
-    limit
+    access_byte
 }

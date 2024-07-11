@@ -11,7 +11,7 @@
 
 extern crate alloc;
 use alloc::vec;
-use core::arch::{global_asm, asm};
+use core::arch::global_asm;
 use core::panic::PanicInfo;
 use core::ptr::addr_of;
 
@@ -19,10 +19,10 @@ use core::ptr::addr_of;
 use hashbrown::HashMap;
 
 // Libray
-use kratos::{gdt, io};
 use kratos::libc::{get_esp, KERNEL_END, KERNEL_START};
 use kratos::multiboot::{print_mmap_sections, MultibootInfo};
 use kratos::println;
+use kratos::{gdt, io};
 
 // Contains Test
 #[cfg(test)]
@@ -47,38 +47,6 @@ fn panic(panic_info: &PanicInfo) -> ! {
     io::exit(1);
 
     loop {}
-}
-
-#[allow(clippy::missing_safety_doc)]
-fn read_cs_reg() -> *const u16 {
-    let mut ret;
-    unsafe {
-        asm!(r#"
-            mov %cs, {ret}
-            "#,
-            ret = out(reg) ret,
-            options(att_syntax)
-        );
-    }
-    ret
-}
-
-fn read_gdtr() -> u64 {
-    let mut ret: u64 = 0;
-    unsafe {
-        asm!(r#"
-            sgdt [{ret}]
-            "#,
-            ret = in(reg) &mut ret,
-            options(nostack, preserves_flags),
-        );
-    }
-
-    ret
-}
-
-fn print_gdt_segment(segment: u16) {
-    println!("Segment: {:#x} {:#b}", segment, segment);
 }
 
 #[allow(clippy::empty_loop, clippy::missing_safety_doc)]
@@ -112,9 +80,11 @@ pub unsafe extern "C" fn kernel_main(_magic: u32, info: *const MultibootInfo) ->
         println!("A map: {:?}", a_map);
     }
 
-    print_gdt_segment(*read_cs_reg());
+    println!("Initial GDT:");
+    gdt::print_gdtr();
     gdt::init();
-    println!("gdt: {:#x}", read_gdtr());
+    println!("Updated GDT");
+    gdt::print_gdtr();
 
     let rtc = io::rtc::Rtc::new(&mut port_manager).expect("Failed to create RTC");
     let mut date = rtc.read();
