@@ -23,3 +23,9 @@
 17) https://wiki.osdev.org/Programmable_Interval_Timer
 18) https://wiki.osdev.org/Interrupts
 19) https://wiki.osdev.org/RTC
+
+* **GDT**
+20) https://wiki.osdev.org/GDT_Tutorial
+21) https://wiki.osdev.org/Global_Descriptor_Table#Segment_Descriptor
+22) https://www.intel.com/content/www/us/en/developer/articles/technical/intel-sdm.html
+23) https://www.gnu.org/software/grub/manual/multiboot/multiboot.html
