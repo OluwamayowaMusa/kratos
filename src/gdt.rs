@@ -1,10 +1,11 @@
+
 use alloc::vec::Vec;
 use core::arch::asm;
 use core::cell::RefCell;
 
 // Library
 use crate::println;
-use crate::util::bit_manipulation::{get_bits, set_bit, set_bits};
+use crate::util::bit_manipulation::{get_bit, get_bits, set_bit, set_bits};
 
 static GDT_ENTRIES: GdtTable = GdtTable::new();
 
@@ -87,10 +88,10 @@ fn read_gdtr() -> Gdt {
     let mut ret = core::mem::MaybeUninit::uninit();
     unsafe {
         asm!(r#"
-            sgdt [{ret}]
+            sgdt ({ret})
             "#,
             ret = in(reg) ret.as_mut_ptr(),
-            options(nostack, preserves_flags),
+            options(att_syntax, nostack, preserves_flags),
         );
 
         ret.assume_init()
@@ -120,6 +121,7 @@ pub unsafe fn print_gdtr() {
 }
 
 #[allow(clippy::missing_safety_doc)]
+#[allow(named_asm_labels)]
 pub unsafe fn init() {
     let mut entries = GDT_ENTRIES.borrow_mut();
     *entries = get_gdt_vals().to_vec();
@@ -132,10 +134,35 @@ pub unsafe fn init() {
         base: entry_addres as u32,
     };
 
+    let cpu_flags: u32;
+
     asm!(r#"
-        lgdt [{}]
+        pushf
+        pop {cpu_flags}
+        push {cpu_flags}
+        popf
         "#,
-        in(reg) &gdt
+        cpu_flags = out(reg) cpu_flags,
+        options(att_syntax),
+    );
+
+    assert_eq!(get_bit(cpu_flags, 9), 0, "Caller is responsible for disabling/enabling interrupts");
+
+    asm!(r#"
+        lgdt ({gdt})
+        jmp $0x08, $.reload_segment_reg
+
+        .reload_segment_reg:
+        mov $0x10, {data_reg}
+        mov {data_reg}, %ds
+        mov {data_reg}, %es
+        mov {data_reg}, %fs
+        mov {data_reg}, %gs
+        mov {data_reg}, %ss
+        "#,
+        gdt = in(reg) &gdt,
+        data_reg = out(reg) _,
+        options(att_syntax)
     );
 }
 
