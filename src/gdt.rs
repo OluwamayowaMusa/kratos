@@ -120,7 +120,6 @@ pub unsafe fn print_gdtr() {
 }
 
 #[allow(clippy::missing_safety_doc)]
-#[allow(named_asm_labels)]
 pub unsafe fn init() {
     let mut entries = GDT_ENTRIES.borrow_mut();
     *entries = get_gdt_vals().to_vec();
@@ -145,13 +144,17 @@ pub unsafe fn init() {
         options(att_syntax),
     );
 
-    assert_eq!(get_bit(cpu_flags, 9), 0, "Caller is responsible for disabling/enabling interrupts");
+    assert_eq!(
+        get_bit(cpu_flags, 9),
+        0,
+        "Caller is responsible for disabling/enabling interrupts"
+    );
 
     asm!(r#"
         lgdt ({gdt})
-        jmp $0x08, $.reload_segment_reg
+        jmp $0x08, $1f
 
-        .reload_segment_reg:
+        1:
         mov $0x10, {data_reg}
         mov {data_reg}, %ds
         mov {data_reg}, %es

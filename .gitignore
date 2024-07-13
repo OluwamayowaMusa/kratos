@@ -4,3 +4,4 @@
 *.iso
 /isodir
 target/
+file_executable

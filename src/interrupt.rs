@@ -1,12 +1,23 @@
-use core::cell::RefCell;
 use core::arch::asm;
+use core::cell::RefCell;
 
-use crate::{io::port_manager::PortManager, println, util::bit_manipulation::{set_bit, set_bits}};
+use crate::{
+    io::port_manager::PortManager,
+    println,
+    util::bit_manipulation::{set_bit, set_bits},
+};
+
+#[macro_export]
+macro_rules! interrupt {
+    ($num: expr) => {
+        core::arch::asm!(concat!("int ", stringify!($num)));
+    };
+}
 
 static INTERRUPT_TABLE: InterruptTable = InterruptTable::new();
 
 struct InterruptTable {
-    inner: RefCell<[GateDescriptor; 256]>
+    inner: RefCell<[GateDescriptor; 256]>,
 }
 
 impl InterruptTable {
@@ -38,50 +49,65 @@ impl GateDescriptor {
     }
 }
 
+enum GateType {
+    Interrupt = 0b1110,
+    Task = 0b1111,
+}
+
 struct GateDescriptorParams {
     offset: u32,
-    segment_selector: u16, 
+    segment_selector: u16,
     gate_type: u8,
     dpl: u8,
     p: bool,
 }
 
-
 pub fn init(port_manager: &mut PortManager) {
-    let master_pic_data = port_manager.request_port(0x21).expect("Failed to get master data port");
-    let slave_pic_data = port_manager.request_port(0xA1).expect("Failed to get slave data port");
-    
+    let master_pic_data = port_manager
+        .request_port(0x21)
+        .expect("Failed to get master data port");
+    let slave_pic_data = port_manager
+        .request_port(0xA1)
+        .expect("Failed to get slave data port");
+
     // Disable External Interrupts
     master_pic_data.writeb(0xFF);
     slave_pic_data.writeb(0xFF);
 
     let general_fault_descriptor = GateDescriptor::new(GateDescriptorParams {
+        #[allow(clippy::fn_to_numeric_cast)]
         offset: general_fault_handler as u32,
         segment_selector: 0x08,
-        gate_type: 0b1111,
+        gate_type: GateType::Task as u8,
         dpl: 0,
         p: true,
-
+    });
+    let double_fault_descriptor = GateDescriptor::new(GateDescriptorParams {
+        #[allow(clippy::fn_to_numeric_cast)]
+        offset: double_fault_handler as u32,
+        segment_selector: 0x08,
+        gate_type: GateType::Interrupt as u8,
+        dpl: 0,
+        p: true,
     });
 
     let mut table = INTERRUPT_TABLE.inner.borrow_mut();
-    table[13] = general_fault_descriptor; 
+    table[8] = double_fault_descriptor;
+    table[13] = general_fault_descriptor;
+
     let size = table.len() * core::mem::size_of::<GateDescriptor>() - 1;
     let table_ptr = table.as_ptr();
-
     let idt = Idt {
         size: size as u16,
         base: table_ptr as u32,
-
     };
-    
+
     println!("Initial IDT: {:?}", read_idtr());
 
     unsafe {
         asm!(r#"
             lidt ({idt})
             sti
-            int $80
             "#,
             idt = in(reg) &idt,
             options(att_syntax),
@@ -112,7 +138,10 @@ struct Idt {
     base: u32,
 }
 
-extern "x86-interrupt" fn general_fault_handler() {
-    //println!("Helloo");
+extern "x86-interrupt" fn general_fault_handler(error_code: u32) {
+    println!("General fault handler, Error code: {}", error_code);
 }
 
+extern "x86-interrupt" fn double_fault_handler(error_code: u32) {
+    println!("Double fault handler, Error code: {}", error_code);
+}
