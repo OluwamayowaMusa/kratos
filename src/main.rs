@@ -21,7 +21,7 @@ use hashbrown::HashMap;
 // Libray
 use kratos::libc::{get_esp, KERNEL_END, KERNEL_START};
 use kratos::multiboot::{print_mmap_sections, MultibootInfo};
-use kratos::println;
+use kratos::{interrupt, println};
 use kratos::{gdt, io};
 
 // Contains Test
@@ -85,6 +85,8 @@ pub unsafe extern "C" fn kernel_main(_magic: u32, info: *const MultibootInfo) ->
     gdt::init();
     println!("Updated GDT");
     gdt::print_gdtr();
+
+    interrupt::init(&mut port_manager);
 
     let rtc = io::rtc::Rtc::new(&mut port_manager).expect("Failed to create RTC");
     let mut date = rtc.read();
