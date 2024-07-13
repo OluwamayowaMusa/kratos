@@ -81,7 +81,7 @@ pub fn init(port_manager: &mut PortManager) {
         asm!(r#"
             lidt ({idt})
             sti
-            int $13
+            int $80
             "#,
             idt = in(reg) &idt,
             options(att_syntax),
@@ -113,6 +113,6 @@ struct Idt {
 }
 
 extern "x86-interrupt" fn general_fault_handler() {
-    println!("Helloo");
+    //println!("Helloo");
 }
 
