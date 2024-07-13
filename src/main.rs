@@ -19,10 +19,10 @@ use core::ptr::addr_of;
 use hashbrown::HashMap;
 
 // Libray
-use kratos::io;
 use kratos::libc::{get_esp, KERNEL_END, KERNEL_START};
 use kratos::multiboot::{print_mmap_sections, MultibootInfo};
-use kratos::println;
+use kratos::{gdt, io};
+use kratos::{interrupt, println};
 
 // Contains Test
 #[cfg(test)]
@@ -79,6 +79,15 @@ pub unsafe extern "C" fn kernel_main(_magic: u32, info: *const MultibootInfo) ->
         a_map.insert("age", 4);
         println!("A map: {:?}", a_map);
     }
+
+    println!("Initial GDT:");
+    gdt::print_gdtr();
+    gdt::init();
+    println!("Updated GDT");
+    gdt::print_gdtr();
+
+    interrupt::init(&mut port_manager);
+    kratos::interrupt!(8);
 
     let rtc = io::rtc::Rtc::new(&mut port_manager).expect("Failed to create RTC");
     let mut date = rtc.read();

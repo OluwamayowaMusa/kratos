@@ -79,7 +79,8 @@ _start:
 
 	/*
 	Push the EBX register to the top of the stack cause it contains the 
-	multiboot information data structure
+	multiboot information data structure, EAX register causes it contains
+	the magic number
 	*/
 	push %ebx
 	push %eax

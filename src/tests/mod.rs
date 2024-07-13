@@ -3,6 +3,8 @@ use kratos::{print, println};
 
 // Test
 mod test_allocator;
+mod test_bit_manipulation;
+mod test_gdt;
 
 pub struct TestCase {
     pub name: &'static str,

@@ -52,6 +52,10 @@ impl Port {
         }
     }
 
+    // Store addr in `dx`
+    // Set `al` to out register
+    // Read the value of dx into al
+    // Store the value of `al` into ret
     pub fn readb(&self) -> u8 {
         unsafe {
             let mut ret;
